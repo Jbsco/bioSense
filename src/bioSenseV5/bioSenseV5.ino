@@ -466,6 +466,7 @@ void sdWrite(void *param){
 }
 
 /*********  FUNCTIONS  **********/
+// BEGIN webserver code insert:
 //Initial page of the server web, list directory and give you the chance of deleting and uploading
 void SD_dir(){
   //Action acording to post, dowload or delete, by MC 2022
@@ -667,6 +668,7 @@ void ReportCouldNotCreateFile(String target){
   SendHTML_Content();
   SendHTML_Stop();
 }
+// END webserver code insert
 
 //File size conversion
 String file_size(int bytes){
