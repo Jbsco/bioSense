@@ -42,12 +42,12 @@
 #define ISRSPEED 1000 // [1/seconds] timer divider, millis by default
 #define servername "bioSense"
 
-/** FAUXLIST: vector class is not defined for Arduino:
+/* FAUXLIST: vector class is not defined for Arduino:
     - not all functions of vector type are needed here.
     - simple custom class works for now
     - this functions similarly to a list,
       by updating 'pos' and overwriting old values.
-      this saves on time spent in loops while in data collection state.      **/
+      this saves on time spent in loops while in data collection state.      */
 class fauxList{
   float vals[AVG_AMT];
   int pos;
@@ -76,7 +76,7 @@ class fauxList{
     }
 };
 
-/** PROTOTYPES:*/
+/* PROTOTYPES:*/
 void initMPU();
 float getAccelDiff();
 void initDisplay();
@@ -84,7 +84,7 @@ void initSPO();
 void initSD();
 void initTimer();
 void ICACHE_RAM_ATTR onTimerISR();
-/** ONTIMERISR: hardware interrupt to set takeSample flag on data rate interval:
+/* ONTIMERISR: hardware interrupt to set takeSample flag on data rate interval:
     - could alternatively look into micros() or microsISR() from "time.h"
       but running this function from RAM allows some addtional event control
     - overall logging state cycle time for all processes is fast anough to hit
@@ -93,23 +93,23 @@ void ICACHE_RAM_ATTR onTimerISR();
     - data resolution is likely sufficient at 100Hz, and when configured for
       this rate the ESP32 is able to consistently hit 10ms cycle times
       (plus/minus only 1ms), and this is corrected by retaining interval
-      overruns in the ISRcount calculation.                                  **/
+      overruns in the ISRcount calculation.                                   */
 void initThreading(); // start threads
-/** INITTHREADING: threading is used to take advantage of the ESP32's two cores:
+/* INITTHREADING: threading is used to take advantage of the ESP32's two cores:
     - this allows splitting function calls between core #0 and #1, to reach 1kHz
     - note that the I2C bus should only be accessed by a single core
       and not both cores independently
     - else thread-unsafe behavior occurs,
       mainly corruption of the content pushed to the OLED display
     - this means that whatever core reads the MPU6050 sensors
-      must also run the OLED display functions                               **/
+      must also run the OLED display functions                                */
 void sensorRead(void *param); // assigned to core #0
 void sdWrite(void *param); // assigned to core #1
 void handleFileUpload();
 //void runFunc(); // function under test
 //void measure_function(); // timing FUT for 5000 iterations
 
-/** GLOBALVARIABLES:*/
+/* GLOBALVARIABLES:*/
 int16_t acc1,acc2; // containers for accelerometer readings
 uint8_t takeSample,loggingState; // flag set on DATAFREQ interval, logging state
 uint fileNum,sampleRateMillis; // filename session number, etc.
@@ -129,7 +129,7 @@ IPAddress gateway(192,168,4,1);
 IPAddress subnet(255,255,255,0);*/
 ESP32WebServer server(80);
 
-/** SETUP:*/
+/* SETUP:*/
 void setup(){
   Serial.begin(115200);
   setCpuFrequencyMhz(240); // maximum safe (default) CPU speed
@@ -146,7 +146,7 @@ void setup(){
 
 void loop(){} // not sure if arduino, or real-time operating system...unused.
 
-/** INITMPU:*/
+/* INITMPU:*/
 void initMPU(){
   Wire.begin(); // Initialize comunication
   Wire.setClock(400000L);
@@ -160,7 +160,7 @@ void initMPU(){
   Wire.endTransmission(true); //end the transmission
 }
 
-/** GETACCELDIFF: only read the y-axes from both MPUs, and store difference*/
+/* GETACCELDIFF: only read the y-axes from both MPUs, and store difference*/
 float getAccelDiff(){
   Wire.beginTransmission(0x68);
   Wire.write(0x3D); // Start with register 0x3D (ACCEL_YOUT_H)
@@ -177,7 +177,7 @@ float getAccelDiff(){
   return (acc2-acc1)/16384.0; // LSB/g
 }
 
-/** INITDISPLAY:*/
+/* INITDISPLAY:*/
 void initDisplay(){
   if (!display.begin(SSD1306_SWITCHCAPVCC,0x3C)) { // address 0x3C for OLED
     Serial.println("SSD1306 init failed");
@@ -193,7 +193,7 @@ void initDisplay(){
   display.display();
 }
 
-/** INITSPO:*/
+/* INITSPO:*/
 void initSPO(){
   Wire.begin();
   int result=bioHub.begin();
@@ -210,7 +210,7 @@ void initSPO(){
   delay(2000); // pause for 2 seconds to catch up
 }
 
-/** INITSD:*/
+/* INITSD:*/
 void initSD(){
   // SD card setup:
   Serial.println("initializing SD card...");
@@ -248,7 +248,7 @@ void initSD(){
   //SD.end();
 }
 
-/** INITTIMER: set hardware clock division to be used by ISR*/
+/* INITTIMER: set hardware clock division to be used by ISR*/
 void initTimer(){
   sampleRateMillis=ISRSPEED/DATAFREQ;
   takeSample=0;
@@ -262,7 +262,7 @@ void initTimer(){
   Serial.println(" Hz.");
 }
 
-/** ONTIMERISR: timer sets the flag at sample rate by clock division count*/
+/* ONTIMERISR: timer sets the flag at sample rate by clock division count*/
 void ICACHE_RAM_ATTR onTimerISR(){
   isrCount++;
   isrElapsed=isrCount-isrPrevious;
@@ -273,7 +273,7 @@ void ICACHE_RAM_ATTR onTimerISR(){
   }
 }
 
-/** INITTHREADING: pin functions to cores, run two loops in parallel*/
+/* INITTHREADING: pin functions to cores, run two loops in parallel*/
 void initThreading(){
   // core 0, 10kbyte stack:
   xTaskCreatePinnedToCore(sensorRead,"sensorRead",10000,NULL,1,&core0,0);
@@ -281,7 +281,7 @@ void initThreading(){
   xTaskCreatePinnedToCore(sdWrite,"sdWrite",10000,NULL,1,&core1,1);
 }
 
-/** SENSORREAD: this function is a task set to run on core #0:
+/* SENSORREAD: this function is a task set to run on core #0:
     - timing should be as fast as possible, this dictates sample resolution
     - fauxList averaging should be adjusted to reflect this                  **/
 void sensorRead(void *param){
@@ -371,10 +371,10 @@ void sensorRead(void *param){
   }
 }
 
-/** SDWRITE: this function is a task set to run on core #1:
+/* SDWRITE: this function is a task set to run on core #1:
     - timing is dictated by ISR setting the takeSample flag
     - logging will run at 100 Hz, 10ms per cycle, +/- 1ms cycle
-    - both functions could be optimized further                              **/
+    - both functions could be optimized further                               */
 void sdWrite(void *param){
   esp_task_wdt_init(60,false);
   Serial.print("sdWrite() is running on core ");
@@ -434,7 +434,7 @@ void sdWrite(void *param){
       if(elapsedTime>=(ISRSPEED)){ // only progress after 1 second
         snprintf(nameBuffer,21,"/data/data-%04i.csv",fileNum+1);
         fileNum++;
-        /** TODO: if file exists, increment filename and reopen**/
+        /* TODO: if file exists, increment filename and reopen*/
         dataFile=SD.open(nameBuffer,FILE_WRITE);
         dataFile.println("timestamp,accel,HR,o2%");
         previousTime=isrCount=bioPrevious=0;
@@ -452,20 +452,20 @@ void sdWrite(void *param){
       loggingState=0; // leave logging state
     }
     if(!loggingState){ // not logging data
-      /** DEBUGGING: print to data stream
+      /* DEBUGGING: print to data stream
       snprintf(dataBuffer,29,"%07i,%06f,%03i,%03i",
                 isrCount,
                 accelArray.getAvg(),
                 body.heartRate,
                 body.oxygen);
-      Serial.println(dataBuffer);**/
+      Serial.println(dataBuffer);*/
       // ^^^NOTE^^^ this will destroy sensor read rates
       // and causes duplicate data points
     }
   }
 }
 
-/*********  FUNCTIONS  **********/
+/*  FUNCTIONS  */
 // BEGIN webserver code insert:
 //Initial page of the server web, list directory and give you the chance of deleting and uploading
 void SD_dir(){
@@ -680,7 +680,7 @@ String file_size(int bytes){
   return fsize;
 }
 
-/** RUNFUNC: testing functions for average time to complete*/
+/* RUNFUNC: testing functions for average time to complete*/
 void runFunc(){
   // first method, adafruit library, roughly 5333 microseconds
   //mpu1_accel->getEvent(&a1); // get mpu1 accel reading
