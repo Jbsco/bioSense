@@ -47,7 +47,7 @@
     - simple custom class works for now
     - this functions similarly to a list,
       by updating 'pos' and overwriting old values.
-      this saves on time spent in loops while in data collection state.       */
+      this saves on time spent in loops while in data collection state.      **/
 class fauxList{
   float vals[AVG_AMT];
   int pos;
@@ -93,7 +93,7 @@ void ICACHE_RAM_ATTR onTimerISR();
     - data resolution is likely sufficient at 100Hz, and when configured for
       this rate the ESP32 is able to consistently hit 10ms cycle times
       (plus/minus only 1ms), and this is corrected by retaining interval
-      overruns in the ISRcount calculation.                                   */
+      overruns in the ISRcount calculation.                                  **/
 void initThreading(); // start threads
 /** INITTHREADING: threading is used to take advantage of the ESP32's two cores:
     - this allows splitting function calls between core #0 and #1, to reach 1kHz
@@ -102,7 +102,7 @@ void initThreading(); // start threads
     - else thread-unsafe behavior occurs,
       mainly corruption of the content pushed to the OLED display
     - this means that whatever core reads the MPU6050 sensors
-      must also run the OLED display functions                                */
+      must also run the OLED display functions                               **/
 void sensorRead(void *param); // assigned to core #0
 void sdWrite(void *param); // assigned to core #1
 void handleFileUpload();
@@ -283,7 +283,7 @@ void initThreading(){
 
 /** SENSORREAD: this function is a task set to run on core #0:
     - timing should be as fast as possible, this dictates sample resolution
-    - fauxList averaging should be adjusted to reflect this                   */
+    - fauxList averaging should be adjusted to reflect this                  **/
 void sensorRead(void *param){
   esp_task_wdt_init(30,false);
   Serial.print("sensorRead() is running on core ");
@@ -374,7 +374,7 @@ void sensorRead(void *param){
 /** SDWRITE: this function is a task set to run on core #1:
     - timing is dictated by ISR setting the takeSample flag
     - logging will run at 100 Hz, 10ms per cycle, +/- 1ms cycle
-    - both functions could be optimized further                               */
+    - both functions could be optimized further                              **/
 void sdWrite(void *param){
   esp_task_wdt_init(60,false);
   Serial.print("sdWrite() is running on core ");
@@ -434,7 +434,7 @@ void sdWrite(void *param){
       if(elapsedTime>=(ISRSPEED)){ // only progress after 1 second
         snprintf(nameBuffer,21,"/data/data-%04i.csv",fileNum+1);
         fileNum++;
-        /** TODO: if file exists, increment filename and reopen*/
+        /** TODO: if file exists, increment filename and reopen**/
         dataFile=SD.open(nameBuffer,FILE_WRITE);
         dataFile.println("timestamp,accel,HR,o2%");
         previousTime=isrCount=bioPrevious=0;
@@ -458,7 +458,7 @@ void sdWrite(void *param){
                 accelArray.getAvg(),
                 body.heartRate,
                 body.oxygen);
-      Serial.println(dataBuffer);*/
+      Serial.println(dataBuffer);**/
       // ^^^NOTE^^^ this will destroy sensor read rates
       // and causes duplicate data points
     }
